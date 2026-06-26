@@ -1,8 +1,8 @@
 # Monta Treino 🏋️
 
 Aplicativo mobile (Android) para montagem de treinos de academia, escrito
-**100% em Python**, usando o framework **Kivy** para a interface gráfica e
-**SQLite** (biblioteca padrão do Python) para armazenamento local.
+em Python, usando o framework **Kivy** para a interface gráfica e
+**SQLite** para armazenamento local.
 
 O app monta treinos aleatórios a partir de um banco de exercícios em CSV,
 de acordo com o tipo de treino, nível de dificuldade e grupo muscular
@@ -76,3 +76,10 @@ Dentro da pasta, rode:
 ```bash
 buildozer -v android debug
 ```
+## License
+
+This project is proprietary software. You are welcome to download and use the code strictly for **personal and private purposes**. 
+
+However, commercial use, modification for public distribution, and direct redistribution of the source code are **strictly prohibited**. Any sharing must be done by linking directly to this original repository.
+
+For full legal terms, please refer to the [LICENSE](https://github.com/vulgorafs/AppMusc/blob/main/LICENSE.txt) file.
