@@ -1,0 +1,690 @@
+# treino.kv
+# ---------------------------------------------------------------------------
+# Layout visual do app, com um estilo "flat design" moderno: cantos
+# arredondados, paleta de cores suave, sombras leves nos cards e seletores
+# (spinners) sempre com uma seta "▾" visível, para deixar claro que aquele
+# campo abre uma lista de opções ao ser tocado.
+#
+# Estrutura geral:
+#   RootLayout (vertical)
+#     -> Barra superior (título + ícone)
+#     -> ScreenManager (ocupa o espaço restante) com as 4 telas
+#     -> Barra de navegação inferior (4 ícones)
+# ---------------------------------------------------------------------------
+
+#:import dp kivy.metrics.dp
+
+
+<ScrollView>:
+    # Ajuste aplicado a TODOS os ScrollView do app: por padrão, o Kivy
+    # considera um toque como "início de rolagem" assim que o dedo se move
+    # apenas ~20dp — o que, em telas reais de celular, é fácil de acontecer
+    # mesmo numa tentativa de toque simples (o dedo nunca fica 100%
+    # parado). Isso fazia o ScrollView "roubar" o toque de elementos que
+    # só ficam visíveis depois de rolar a tela (como os últimos itens de
+    # uma lista de exercícios), impedindo cliques em checkboxes/botões
+    # nessa situação. Aumentar 'scroll_distance' torna o ScrollView mais
+    # tolerante a pequenos tremores do dedo antes de assumir que é uma
+    # rolagem, sem prejudicar rolagens intencionais (mais longas).
+    scroll_distance: dp(40)
+    # Tempo (em ms) que o Kivy espera antes de decidir se o toque é uma
+    # rolagem ou um toque comum. Um valor um pouco maior dá mais margem
+    # para toques rápidos não virarem rolagem por engano.
+    scroll_timeout: 250
+
+
+<IconWidget>:
+    size_hint: None, None
+    size: dp(26), dp(26)
+
+
+<BotaoEstilizado>:
+    # Botão customizado com cantos arredondados e cor de destaque, usado em
+    # todo o app no lugar do Button cinza/quadrado padrão do Kivy.
+    canvas.before:
+        Color:
+            # Se 'selecionado' for True, preenche com a cor principal (ou a
+            # cor personalizada do botão, se houver). Se for False, deixa o
+            # fundo transparente e desenha só uma borda (estilo "outline"),
+            # usado por exemplo no botão do tema que NÃO está ativo.
+            rgba: (root.cor_personalizada if root.cor_personalizada else app.cor_destaque) if root.selecionado else (0, 0, 0, 0)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(12)]
+        Color:
+            rgba: (root.cor_personalizada if root.cor_personalizada else app.cor_destaque) if not root.selecionado else (0, 0, 0, 0)
+        Line:
+            rounded_rectangle: [self.x, self.y, self.width, self.height, dp(12)]
+            width: dp(1.4)
+
+    Label:
+        text: root.texto
+        bold: True
+        font_size: "15sp"
+        color: (1, 1, 1, 1) if root.selecionado else (root.cor_personalizada if root.cor_personalizada else app.cor_destaque)
+
+
+<BottomNavItem>:
+    orientation: "vertical"
+    spacing: dp(2)
+    padding: dp(4)
+    canvas.before:
+        Color:
+            # "Pílula" de destaque suave atrás do ícone ativo, parecido com
+            # o indicador de seleção usado em apps Android modernos.
+            rgba: (app.cor_destaque[0], app.cor_destaque[1], app.cor_destaque[2], 0.16) if root.active else (0, 0, 0, 0)
+        RoundedRectangle:
+            pos: self.x + self.width * 0.18, self.y + self.height * 0.10
+            size: self.width * 0.64, self.height * 0.80
+            radius: [dp(16)]
+
+    AnchorLayout:
+        size_hint_y: 0.62
+        anchor_x: "center"
+        anchor_y: "center"
+        IconWidget:
+            id: icone
+            icon_name: root.icon_name
+            cor: app.cor_destaque if root.active else app.cor_nav_inativo
+
+    Label:
+        text: root.texto
+        font_size: "11sp"
+        color: app.cor_destaque if root.active else app.cor_nav_inativo
+        size_hint_y: 0.38
+        bold: root.active
+
+
+<CampoTexto@TextInput>:
+    # Estilo padrão de campo de texto usado no app: fundo "superfície",
+    # cantos arredondados e sem a borda azul feia padrão do Kivy.
+    background_normal: ""
+    background_active: ""
+    background_color: 0, 0, 0, 0
+    foreground_color: app.cor_texto
+    hint_text_color: app.cor_texto_suave
+    cursor_color: app.cor_destaque
+    padding: [dp(14), dp(12)]
+    multiline: False
+
+
+<RootLayout>:
+    orientation: "vertical"
+    canvas.before:
+        Color:
+            rgba: app.cor_fundo
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        # Barra superior com a identidade do app: ícone + título + subtítulo.
+        size_hint_y: None
+        height: dp(72)
+        padding: [dp(16), dp(10)]
+        spacing: dp(10)
+        canvas.before:
+            Color:
+                rgba: app.cor_destaque
+            Rectangle:
+                pos: self.pos
+                size: self.size
+            # Sombra sutil na borda inferior da barra, para dar uma leve
+            # sensação de profundidade/elevação em relação ao conteúdo.
+            Color:
+                rgba: 0, 0, 0, 0.12
+            Rectangle:
+                pos: self.x, self.y - dp(3)
+                size: self.width, dp(3)
+
+        AnchorLayout:
+            size_hint_x: None
+            width: dp(40)
+            IconWidget:
+                icon_name: "exercicios"
+                cor: 1, 1, 1, 1
+
+        BoxLayout:
+            orientation: "vertical"
+            Label:
+                text: "Monta Treino"
+                bold: True
+                color: 1, 1, 1, 1
+                font_size: "20sp"
+                halign: "left"
+                valign: "bottom"
+                text_size: self.size
+            Label:
+                text: "Monte seu treino ideal"
+                color: 1, 1, 1, 0.85
+                font_size: "12sp"
+                halign: "left"
+                valign: "top"
+                text_size: self.size
+
+    ScreenManager:
+        id: gerenciador_telas
+
+        TelaHome:
+            id: tela_home
+            name: "home"
+
+        TelaExercicios:
+            id: tela_exercicios
+            name: "exercicios"
+
+        TelaNovoTreino:
+            id: tela_novo_treino
+            name: "novo_treino"
+
+        TelaConfiguracoes:
+            id: tela_configuracoes
+            name: "configuracoes"
+
+    BoxLayout:
+        id: barra_navegacao
+        size_hint_y: None
+        height: dp(64)
+        canvas.before:
+            Color:
+                rgba: app.cor_barra_nav
+            Rectangle:
+                pos: self.pos
+                size: self.size
+            Color:
+                rgba: app.cor_borda
+            Line:
+                points: [self.x, self.top, self.right, self.top]
+                width: 1
+
+        BottomNavItem:
+            icon_name: "home"
+            texto: "Home"
+            active: app.tela_atual == "home"
+            on_release: app.trocar_tela("home")
+
+        BottomNavItem:
+            icon_name: "exercicios"
+            texto: "Exercícios"
+            active: app.tela_atual == "exercicios"
+            on_release: app.trocar_tela("exercicios")
+
+        BottomNavItem:
+            icon_name: "novo_treino"
+            texto: "Novo Treino"
+            active: app.tela_atual == "novo_treino"
+            on_release: app.trocar_tela("novo_treino")
+
+        BottomNavItem:
+            icon_name: "config"
+            texto: "Config"
+            active: app.tela_atual == "configuracoes"
+            on_release: app.trocar_tela("configuracoes")
+
+
+<TelaHome>:
+    BoxLayout:
+        orientation: "vertical"
+        padding: dp(14)
+        spacing: dp(12)
+        canvas.before:
+            Color:
+                rgba: app.cor_fundo
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        Label:
+            text: "Seus treinos salvos"
+            bold: True
+            color: app.cor_texto
+            size_hint_y: None
+            height: dp(30)
+            font_size: "19sp"
+            halign: "left"
+            text_size: self.size
+
+        ScrollView:
+            BoxLayout:
+                id: lista_treinos_home
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: dp(12)
+                padding: [0, 0, 0, dp(8)]
+
+
+<TelaExercicios>:
+    BoxLayout:
+        orientation: "vertical"
+        padding: dp(14)
+        spacing: dp(12)
+        canvas.before:
+            Color:
+                rgba: app.cor_fundo
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        BoxLayout:
+            size_hint_y: None
+            height: dp(46)
+            spacing: dp(10)
+
+            FloatLayout:
+                # "Campo seletor" estilizado: fundo arredondado + seta "▾"
+                # sempre visível no canto direito, para indicar claramente
+                # que é possível tocar para abrir uma lista de opções.
+                canvas.before:
+                    Color:
+                        rgba: app.cor_superficie
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(10)]
+                    Color:
+                        rgba: app.cor_borda
+                    Line:
+                        rounded_rectangle: [self.x, self.y, self.width, self.height, dp(10)]
+                        width: dp(1.2)
+
+                Spinner:
+                    id: filtro_grupo_exercicios
+                    text: "Todos os grupos"
+                    size_hint: 1, 1
+                    pos: self.parent.pos
+                    background_normal: ""
+                    background_down: ""
+                    background_color: 0, 0, 0, 0
+                    color: app.cor_texto
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.width - dp(40), self.height
+                    padding: [dp(14), 0]
+                    on_text: root.aplicar_filtros()
+
+                IconWidget:
+                    icon_name: "seta_baixo"
+                    cor: app.cor_texto_suave
+                    size_hint: None, None
+                    size: dp(16), dp(16)
+                    pos_hint: {"right": 0.94, "center_y": 0.5}
+
+            FloatLayout:
+                canvas.before:
+                    Color:
+                        rgba: app.cor_superficie
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(10)]
+                    Color:
+                        rgba: app.cor_borda
+                    Line:
+                        rounded_rectangle: [self.x, self.y, self.width, self.height, dp(10)]
+                        width: dp(1.2)
+
+                Spinner:
+                    id: filtro_nivel_exercicios
+                    text: "Todos os níveis"
+                    values: ["Todos os níveis", "Iniciante", "Intermediário", "Avançado"]
+                    size_hint: 1, 1
+                    pos: self.parent.pos
+                    background_normal: ""
+                    background_down: ""
+                    background_color: 0, 0, 0, 0
+                    color: app.cor_texto
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.width - dp(40), self.height
+                    padding: [dp(14), 0]
+                    on_text: root.aplicar_filtros()
+
+                IconWidget:
+                    icon_name: "seta_baixo"
+                    cor: app.cor_texto_suave
+                    size_hint: None, None
+                    size: dp(16), dp(16)
+                    pos_hint: {"right": 0.94, "center_y": 0.5}
+
+        ScrollView:
+            BoxLayout:
+                id: lista_exercicios
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: dp(6)
+
+
+<TelaNovoTreino>:
+    BoxLayout:
+        orientation: "vertical"
+        padding: dp(14)
+        spacing: dp(10)
+        canvas.before:
+            Color:
+                rgba: app.cor_fundo
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        Label:
+            text: "1. Tipo de treino"
+            color: app.cor_texto_suave
+            size_hint_y: None
+            height: dp(22)
+            font_size: "13sp"
+            halign: "left"
+            text_size: self.size
+
+        FloatLayout:
+            size_hint_y: None
+            height: dp(46)
+            canvas.before:
+                Color:
+                    rgba: app.cor_superficie
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(10)]
+                Color:
+                    rgba: app.cor_borda
+                Line:
+                    rounded_rectangle: [self.x, self.y, self.width, self.height, dp(10)]
+                    width: dp(1.2)
+
+            Spinner:
+                id: spinner_tipo_treino
+                text: "Grupo muscular"
+                values: ["Grupo muscular", "Treino A/B (superior/inferior)", "Full body (corpo todo)"]
+                size_hint: 1, 1
+                pos: self.parent.pos
+                background_normal: ""
+                background_down: ""
+                background_color: 0, 0, 0, 0
+                color: app.cor_texto
+                halign: "left"
+                valign: "middle"
+                text_size: self.width - dp(40), self.height
+                padding: [dp(14), 0]
+                on_text: root.atualizar_visibilidade_grupo()
+
+            IconWidget:
+                icon_name: "seta_baixo"
+                cor: app.cor_texto_suave
+                size_hint: None, None
+                size: dp(16), dp(16)
+                pos_hint: {"right": 0.94, "center_y": 0.5}
+
+        Label:
+            text: "2. Nível de dificuldade"
+            color: app.cor_texto_suave
+            size_hint_y: None
+            height: dp(22)
+            font_size: "13sp"
+            halign: "left"
+            text_size: self.size
+
+        FloatLayout:
+            size_hint_y: None
+            height: dp(46)
+            canvas.before:
+                Color:
+                    rgba: app.cor_superficie
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(10)]
+                Color:
+                    rgba: app.cor_borda
+                Line:
+                    rounded_rectangle: [self.x, self.y, self.width, self.height, dp(10)]
+                    width: dp(1.2)
+
+            Spinner:
+                id: spinner_nivel_treino
+                text: "Iniciante"
+                values: ["Iniciante", "Intermediário", "Avançado"]
+                size_hint: 1, 1
+                pos: self.parent.pos
+                background_normal: ""
+                background_down: ""
+                background_color: 0, 0, 0, 0
+                color: app.cor_texto
+                halign: "left"
+                valign: "middle"
+                text_size: self.width - dp(40), self.height
+                padding: [dp(14), 0]
+
+            IconWidget:
+                icon_name: "seta_baixo"
+                cor: app.cor_texto_suave
+                size_hint: None, None
+                size: dp(16), dp(16)
+                pos_hint: {"right": 0.94, "center_y": 0.5}
+
+        Label:
+            id: label_grupo_treino
+            text: "3. Grupo muscular específico"
+            color: app.cor_texto_suave
+            size_hint_y: None
+            height: dp(22)
+            font_size: "13sp"
+            halign: "left"
+            text_size: self.size
+
+        FloatLayout:
+            id: caixa_grupo_treino
+            size_hint_y: None
+            height: dp(46)
+            canvas.before:
+                Color:
+                    rgba: app.cor_superficie
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(10)]
+                Color:
+                    rgba: app.cor_borda
+                Line:
+                    rounded_rectangle: [self.x, self.y, self.width, self.height, dp(10)]
+                    width: dp(1.2)
+
+            Spinner:
+                id: spinner_grupo_treino
+                text: "Peito"
+                values: ["Peito", "Costas", "Ombros", "Braços", "Pernas", "Abdômen/Core"]
+                size_hint: 1, 1
+                pos: self.parent.pos
+                background_normal: ""
+                background_down: ""
+                background_color: 0, 0, 0, 0
+                color: app.cor_texto
+                halign: "left"
+                valign: "middle"
+                text_size: self.width - dp(40), self.height
+                padding: [dp(14), 0]
+
+            IconWidget:
+                id: seta_grupo_treino
+                icon_name: "seta_baixo"
+                cor: app.cor_texto_suave
+                size_hint: None, None
+                size: dp(16), dp(16)
+                pos_hint: {"right": 0.94, "center_y": 0.5}
+
+        BotaoEstilizado:
+            texto: "Gerar treino"
+            size_hint_y: None
+            height: dp(48)
+            on_release: root.gerar_treino()
+
+        ScrollView:
+            BoxLayout:
+                id: resultado_novo_treino
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: dp(6)
+                padding: [0, dp(6), 0, dp(8)]
+
+
+<TelaConfiguracoes>:
+    canvas.before:
+        Color:
+            rgba: app.cor_fundo
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    ScrollView:
+        # Como esta aba agora tem bastante conteúdo (peso, gráfico, lista
+        # de pesos, tema, gráfico de músculos), colocamos tudo dentro de um
+        # ScrollView para garantir que caiba em qualquer tamanho de tela.
+        BoxLayout:
+            id: conteudo_configuracoes
+            orientation: "vertical"
+            padding: dp(14)
+            spacing: dp(12)
+            size_hint_y: None
+            height: self.minimum_height
+
+            Label:
+                text: "Diário de peso"
+                bold: True
+                color: app.cor_texto
+                size_hint_y: None
+                height: dp(28)
+                font_size: "17sp"
+                halign: "left"
+                text_size: self.size
+
+            BoxLayout:
+                size_hint_y: None
+                height: dp(46)
+                spacing: dp(10)
+
+                FloatLayout:
+                    canvas.before:
+                        Color:
+                            rgba: app.cor_superficie
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [dp(10)]
+                        Color:
+                            rgba: app.cor_borda
+                        Line:
+                            rounded_rectangle: [self.x, self.y, self.width, self.height, dp(10)]
+                            width: dp(1.2)
+
+                    CampoTexto:
+                        id: campo_peso
+                        hint_text: "Peso atual (kg)"
+                        input_filter: "float"
+                        size_hint: 1, 1
+                        pos: self.parent.pos
+
+                BotaoEstilizado:
+                    texto: "Registrar"
+                    size_hint_x: None
+                    width: dp(110)
+                    on_release: root.registrar_peso()
+
+            BoxLayout:
+                size_hint_y: None
+                height: dp(220)
+                padding: dp(10)
+                canvas.before:
+                    Color:
+                        rgba: app.cor_superficie
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(14)]
+
+                GraficoPeso:
+                    id: grafico_peso
+
+            Label:
+                text: "Histórico de pesos"
+                bold: True
+                color: app.cor_texto
+                size_hint_y: None
+                height: dp(24)
+                font_size: "14sp"
+                halign: "left"
+                text_size: self.size
+
+            BoxLayout:
+                id: lista_pesos
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: dp(4)
+
+            Label:
+                text: "Tema do aplicativo"
+                bold: True
+                color: app.cor_texto
+                size_hint_y: None
+                height: dp(28)
+                font_size: "17sp"
+                halign: "left"
+                text_size: self.size
+
+            BoxLayout:
+                size_hint_y: None
+                height: dp(46)
+                spacing: dp(10)
+
+                BotaoEstilizado:
+                    texto: "Tema claro"
+                    selecionado: app.nome_tema == "claro"
+                    on_release: app.definir_tema("claro")
+                BotaoEstilizado:
+                    texto: "Tema escuro"
+                    selecionado: app.nome_tema == "escuro"
+                    on_release: app.definir_tema("escuro")
+
+            Label:
+                text: "Músculos mais treinados"
+                bold: True
+                color: app.cor_texto
+                size_hint_y: None
+                height: dp(28)
+                font_size: "17sp"
+                halign: "left"
+                text_size: self.size
+
+            Label:
+                text: "Baseado nos exercícios marcados como concluídos na aba Home"
+                color: app.cor_texto_suave
+                size_hint_y: None
+                height: dp(20)
+                font_size: "11sp"
+                halign: "left"
+                text_size: self.size
+
+            BoxLayout:
+                size_hint_y: None
+                height: dp(10) if not grafico_musculos.height else grafico_musculos.height + dp(16)
+                padding: dp(8)
+                canvas.before:
+                    Color:
+                        rgba: app.cor_superficie
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(14)]
+
+                GraficoBarras:
+                    id: grafico_musculos
+                    size_hint_y: None
+
+            Widget:
+                # Espaço flexível vazio no final, para dar um respiro
+                # depois do último gráfico.
+                size_hint_y: None
+                height: dp(20)
